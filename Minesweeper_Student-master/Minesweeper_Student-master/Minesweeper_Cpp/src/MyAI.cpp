@@ -33,7 +33,7 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
 Agent::Action MyAI::getAction( int number )
 {
     // ======================================================================
-    // YOUR CODE BEGINS
+    // YOUR CODE BEGINS!!!!
     // ======================================================================
 
 

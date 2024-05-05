@@ -25,11 +25,19 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     // YOUR CODE BEGINS
     // ======================================================================
 
+    // initializing all variables inherited from Agent.hpp
     rowDimension = _rowDimension;
     colDimension = _colDimension;
     totalMines = _totalMines;
     agentX = _agentX;
     agentY = _agentY;
+
+
+    // created a blank copy of the board to update as game progresses
+    playerBoard.resize(colDimension, vector<Tile>(rowDimension));
+    playerBoard[_agentX][_agentY].uncovered = true;
+
+    numUncoveredTiles = 1;
 
     // ======================================================================
     // YOUR CODE ENDS
@@ -40,15 +48,26 @@ Agent::Action MyAI::getAction( int number )
 {
     // ======================================================================
     // YOUR CODE BEGINS
-    // ======================================================================
+    // ======================================================================    
 
-    int numOfLoops = rowDimension * colDimension - totalMines;
-    for (int i = 0; i < numOfLoops; ++i)
+    if (colDimension * rowDimension - numUncoveredTiles <= totalMines)
     {
-        cout << "HELLO" << endl;
+        return {LEAVE,-1,-1};
     }
 
-    return {LEAVE,-1,-1};
+    else
+    {
+        int randomRow = rand() % rowDimension;
+        int randomCol = rand() % colDimension;
+        if (playerBoard[randomRow][randomCol].uncovered == false)
+            numUncoveredTiles++;
+
+        cout << colDimension * rowDimension - numUncoveredTiles << " " << totalMines << endl;
+
+        return {UNCOVER, randomRow, randomCol};
+        
+    }
+        
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================

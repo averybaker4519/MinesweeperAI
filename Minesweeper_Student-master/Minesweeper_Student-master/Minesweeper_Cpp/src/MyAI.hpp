@@ -41,7 +41,20 @@ public:
     // YOUR CODE BEGINS
     // ======================================================================
 
+    // taken from World.hpp
+    struct Tile
+    {
+        bool uncovered  = false; // the tile uncovered or not
+        bool flag       = false; // the tile has been flag or not
+        int  number     = 0;     // records number of bombs around
+    };
 
+    vector<vector<Tile>> playerBoard;
+
+    int numUncoveredTiles;
+
+
+    int getTilesUncovered();
 
     // ======================================================================
     // YOUR CODE ENDS

@@ -25,6 +25,12 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     // YOUR CODE BEGINS
     // ======================================================================
 
+    rowDimension = _rowDimension;
+    colDimension = _colDimension;
+    totalMines = _totalMines;
+    agentX = _agentX;
+    agentY = _agentY;
+
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================
@@ -33,13 +39,18 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
 Agent::Action MyAI::getAction( int number )
 {
     // ======================================================================
-    // YOUR CODE BEGINS!!!!
+    // YOUR CODE BEGINS
     // ======================================================================
 
+    int numOfLoops = rowDimension * colDimension - totalMines;
+    for (int i = 0; i < numOfLoops; ++i)
+    {
+        cout << "HELLO" << endl;
+    }
 
     return {LEAVE,-1,-1};
     // ======================================================================
-    // YOUR CODE ENDS!
+    // YOUR CODE ENDS
     // ======================================================================
 
 }

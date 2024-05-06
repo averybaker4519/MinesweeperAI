@@ -52,9 +52,11 @@ public:
     vector<vector<Tile>> playerBoard;
 
     int numUncoveredTiles;
+    int numFlaggedTiles;
 
-
-    int getTilesUncovered();
+    int calculateEffectiveLabel(int x, int y, int number);
+    int getNumUnmarkedNeighbors(int x, int y);
+    void markUnmarkedNeighbors(int x, int y);
 
     // ======================================================================
     // YOUR CODE ENDS

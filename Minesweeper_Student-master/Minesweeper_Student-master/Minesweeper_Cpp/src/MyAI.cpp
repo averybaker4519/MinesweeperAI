@@ -59,10 +59,18 @@ Agent::Action MyAI::getAction( int number )
     {
         int randomRow = rand() % rowDimension;
         int randomCol = rand() % colDimension;
-        if (playerBoard[randomRow][randomCol].uncovered == false)
+        if (!playerBoard[randomRow][randomCol].uncovered)
+        {
             numUncoveredTiles++;
+        }
 
         cout << colDimension * rowDimension - numUncoveredTiles << " " << totalMines << endl;
+        
+        playerBoard[randomRow][randomCol].uncovered = true;
+
+        // testing ooyt helper functions
+        cout << "Effective Label: " <<  calculateEffectiveLabel(randomRow, randomCol, number);
+        cout << "Number of Unmarked Neighbors: " << getNumUnmarkedNeighbors(randomRow, randomCol) << endl;
 
         return {UNCOVER, randomRow, randomCol};
         
@@ -79,7 +87,64 @@ Agent::Action MyAI::getAction( int number )
 // YOUR CODE BEGINS
 // ======================================================================
 
+// Calculate the effective label of a tile by subtracting the number of marked neighbors from its label
+int MyAI::calculateEffectiveLabel(int x, int y, int number) 
+{
+    int numMarkedNeighbors = 0;
+    for (int dx = -1; dx <= 1; ++dx) 
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && playerBoard[nx][ny].flag) 
+            {
+                ++numMarkedNeighbors;
+            }
+        }
+    }
 
+    return number - numMarkedNeighbors;
+}
+
+// Count the number of unmarked neighbors of a tile
+int MyAI::getNumUnmarkedNeighbors(int x, int y) 
+{
+    int numUnmarkedNeighbors = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
+            {
+                ++numUnmarkedNeighbors;
+            }
+        }
+    }
+    return numUnmarkedNeighbors;
+}
+
+// Mark all unmarked neighbors of a tile as mines
+void MyAI::markUnmarkedNeighbors(int x, int y) 
+{
+    for (int dx = -1; dx <= 1; ++dx) 
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
+            {
+                playerBoard[nx][ny].flag = true;
+                // Update the number of flagged tiles
+                ++numFlaggedTiles;
+            }
+        }
+    }
+}
 
 // ======================================================================
 // YOUR CODE ENDS

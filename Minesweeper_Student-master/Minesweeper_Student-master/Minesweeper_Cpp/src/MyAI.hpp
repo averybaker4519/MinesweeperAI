@@ -50,9 +50,12 @@ public:
     };
 
     vector<vector<Tile>> playerBoard;
+    vector<Tile> tilesToUncover;
 
     int numUncoveredTiles;
     int numFlaggedTiles;
+
+    Agent::Action ruleOfThumb(int number);
 
     int calculateEffectiveLabel(int x, int y, int number);
     int getNumUnmarkedNeighbors(int x, int y);

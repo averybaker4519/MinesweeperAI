@@ -57,23 +57,7 @@ Agent::Action MyAI::getAction( int number )
 
     else
     {
-        int randomRow = rand() % rowDimension;
-        int randomCol = rand() % colDimension;
-        if (!playerBoard[randomRow][randomCol].uncovered)
-        {
-            numUncoveredTiles++;
-        }
-
-        //cout << colDimension * rowDimension - numUncoveredTiles << " " << totalMines << endl;
-        
-        playerBoard[randomRow][randomCol].uncovered = true;
-
-        // testing ooyt helper functions
-        //cout << "Effective Label: " <<  calculateEffectiveLabel(randomRow, randomCol, number);
-        //cout << "Number of Unmarked Neighbors: " << getNumUnmarkedNeighbors(randomRow, randomCol) << endl;
-
-        return {UNCOVER, randomRow, randomCol};
-        
+       return ruleOfThumb(number); 
     }
         
     // ======================================================================
@@ -86,6 +70,47 @@ Agent::Action MyAI::getAction( int number )
 // ======================================================================
 // YOUR CODE BEGINS
 // ======================================================================
+
+Agent::Action MyAI::ruleOfThumb(int number)
+{
+    // Initialize an action to return
+    Agent::Action action = {LEAVE, -1, -1};
+
+    // Iterate over all uncovered tiles on the board
+    for (int x = 0; x < colDimension; ++x) 
+    {
+        for (int y = 0; y < rowDimension; ++y) 
+        {
+            if (!playerBoard[x][y].uncovered) 
+            {
+                // Get the effective label of the current tile
+                int effectiveLabel = calculateEffectiveLabel(x, y, number);
+                //cout << x << ", " << y << ": " << effectiveLabel << endl;
+
+                // Get the number of unmarked neighbors
+                int numUnmarked = getNumUnmarkedNeighbors(x, y);
+
+                // Apply rules of thumb
+                if (effectiveLabel == numUnmarked) 
+                {
+                    // All unmarked neighbors must be mines
+                    markUnmarkedNeighbors(x, y);
+                }
+                else if (effectiveLabel == 0) 
+                {
+                    // All unmarked neighbors must be safe to uncover
+                    // Uncover them
+                    playerBoard[x][y].uncovered = true;
+                    ++numUncoveredTiles;
+                    action = {UNCOVER, x, y}; // Update the action to uncover this tile
+                    return action; // Return the action immediately after uncovering one tile
+                }
+            }
+        }
+    }
+
+    return action; // Return the action (default is LEAVE) if no tile is uncovered}
+}
 
 // Calculate the effective label of a tile by subtracting the number of marked neighbors from its label
 int MyAI::calculateEffectiveLabel(int x, int y, int number) 

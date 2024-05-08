@@ -64,13 +64,13 @@ Agent::Action MyAI::getAction( int number )
             numUncoveredTiles++;
         }
 
-        cout << colDimension * rowDimension - numUncoveredTiles << " " << totalMines << endl;
+        //cout << colDimension * rowDimension - numUncoveredTiles << " " << totalMines << endl;
         
         playerBoard[randomRow][randomCol].uncovered = true;
 
         // testing ooyt helper functions
-        cout << "Effective Label: " <<  calculateEffectiveLabel(randomRow, randomCol, number);
-        cout << "Number of Unmarked Neighbors: " << getNumUnmarkedNeighbors(randomRow, randomCol) << endl;
+        //cout << "Effective Label: " <<  calculateEffectiveLabel(randomRow, randomCol, number);
+        //cout << "Number of Unmarked Neighbors: " << getNumUnmarkedNeighbors(randomRow, randomCol) << endl;
 
         return {UNCOVER, randomRow, randomCol};
         

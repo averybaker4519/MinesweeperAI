@@ -36,7 +36,6 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     // created a blank copy of the board to update as game progresses
     playerBoard.resize(colDimension, vector<Tile>(rowDimension));
     playerBoard[_agentX][_agentY].uncovered = true;
-
     numUncoveredTiles = 1;
 
     // ======================================================================
@@ -57,7 +56,8 @@ Agent::Action MyAI::getAction( int number )
 
     else
     {
-       return ruleOfThumb(number); 
+        cout << "NUM OF FLAGGED TILES TOTAL: " << numFlaggedTiles << endl;
+        return ruleOfThumb(number); 
     }
         
     // ======================================================================
@@ -73,7 +73,7 @@ Agent::Action MyAI::getAction( int number )
 
 Agent::Action MyAI::ruleOfThumb(int number)
 {
-    cout << agentX+1 << " " << agentY+1 << endl;
+    cout << agentX+1 << " " << agentY+1 << "number:" << number << endl;
     // Calculate effective label of the current tile
     int effectiveLabel = calculateEffectiveLabel(agentX, agentY, number);
 
@@ -86,32 +86,38 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 int ny = agentY + dy;
 		        
                 if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) {
-                    cout << "UNCOVERING ALL NEIGHBORS" << endl;
+                    cout << "UNCOVERING ALL NEIGHBORS AROUND " << agentX+1 << " " << agentY+1 << ": " << nx+1 << " " << ny+1 << endl;
                     // Uncover the tile
                     playerBoard[nx][ny].uncovered = true;
+                    playerBoard[lastX][lastY].number = number;
                     // Update the count of uncovered tiles
                     ++numUncoveredTiles;
                     // Return the action to uncover the tile
+                    lastX = nx;
+                    lastY = ny;
                     return {UNCOVER, nx, ny};
                 }
             }
         }
     } 
     else if (effectiveLabel == getNumUnmarkedNeighbors(agentX, agentY)) {
-        cout << "Marking all neighbors at " << agentX << " " << agentY <<  endl;
+        cout << "Marking all neighbors around " << agentX+1 << " " << agentY+1 <<  endl;
         // If effective label equals the number of unmarked neighbors, mark all unmarked neighbors as mines
         markUnmarkedNeighbors(agentX, agentY);
         // Return LEAVE action as marking is done and no further action is required
         
     }
     
-        cout << "Uncovering tile" << endl;
-        if (!playerBoard[agentX][agentY].uncovered)
-           ++numUncoveredTiles;
-        playerBoard[agentX][agentY].uncovered = true;
-        return {UNCOVER, agentX, agentY};
+    // Update agent's position to the last uncovered tile
+    agentX = lastX;
+    agentY = lastY;
 
-
+    // Uncover the current tile if effective label is not 0 or the number of unmarked neighbors
+    cout << "Uncovering tile: " << agentX+1 << " " << agentY+1 << endl;
+    if (!playerBoard[agentX][agentY].uncovered)
+       ++numUncoveredTiles;
+    playerBoard[agentX][agentY].uncovered = true;
+    return {UNCOVER, agentX, agentY}; 
 }
 
 // Calculate the effective label of a tile by subtracting the number of marked neighbors from its label
@@ -131,8 +137,8 @@ int MyAI::calculateEffectiveLabel(int x, int y, int number)
         }
     }
 
-    cout << "Effective label of " << x << " " << y << ": " << number - numMarkedNeighbors << endl;
-    return number - numMarkedNeighbors;
+    //cout << "Effective label of " << x+1 << " " << y+1 << ": " << number - numMarkedNeighbors << endl;
+    return playerBoard[x][y].number - numMarkedNeighbors;
 }
 
 // Count the number of unmarked neighbors of a tile
@@ -147,11 +153,12 @@ int MyAI::getNumUnmarkedNeighbors(int x, int y)
             int ny = y + dy;
             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
             {
+                cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
                 ++numUnmarkedNeighbors;
             }
         }
     }
-    cout << "Num unmarked neighbors: " << numUnmarkedNeighbors << endl;
+    cout << "Num unmarked neighbors around " << x+1 << " " << y+1 << ": " << numUnmarkedNeighbors << endl;
     return numUnmarkedNeighbors;
 }
 
@@ -167,7 +174,7 @@ void MyAI::markUnmarkedNeighbors(int x, int y)
             
             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
             {  
-                cout << "Marking " << nx << " " << ny << endl;
+                cout << "Marking " << nx+1 << " " << ny+1 << endl;
                 playerBoard[nx][ny].flag = true;
                 // Update the number of flagged tiles
                 ++numFlaggedTiles;

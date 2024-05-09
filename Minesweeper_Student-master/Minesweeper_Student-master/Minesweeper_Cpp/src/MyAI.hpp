@@ -54,6 +54,7 @@ public:
 
     int numUncoveredTiles;
     int numFlaggedTiles;
+    int lastX, lastY;
 
     Agent::Action ruleOfThumb(int number);
 

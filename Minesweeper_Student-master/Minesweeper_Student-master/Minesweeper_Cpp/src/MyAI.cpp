@@ -111,26 +111,82 @@ Agent::Action MyAI::ruleOfThumb(int number)
             }
         }
 
-        TileLoc nextTile = tilesToUncover.back();
-        cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
-        contains(tilesToUncover, TileLoc(-1, -1));
-
-        while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
+        if (tilesToUncover.empty())
         {
-            // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+            vector<TileLoc> lastfewcovered = vector<TileLoc>();
+            for (int x = 0; x < colDimension; x++)
+            {
+                for (int y = 0; y < rowDimension; y++)
+                {
+                    if (!playerBoard[x][y].uncovered && !contains(tilesToUncover, TileLoc{x, y}))
+                    {
+                        lastfewcovered.push_back(TileLoc{x, y});
+                    }
+                }
+            }
+            int min = INT_MAX;
 
-            tilesToUncover.pop_back();
+            for (int i = 0; i < lastfewcovered.size(); i++)
+            {
+                if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) < min)
+                {
+                    min = originDiff(lastfewcovered[i].x, lastfewcovered[i].y);
+                }
+            }
+            for (int i = 0; i < lastfewcovered.size(); i++)
+            {
+                if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) != min)
+                {
+                    tilesToUncover.push_back(lastfewcovered[i]);
+                }
+            }
+
             TileLoc nextTile = tilesToUncover.back();
+            tilesToUncover.pop_back();
+
+            while (playerBoard[nextTile.x][nextTile.y].uncovered) 
+            {
+                // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+                tilesToUncover.pop_back();
+                TileLoc nextTile = tilesToUncover.back();
+            }
+            playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+            ++numUncoveredTiles;
+            // Return the action to uncover the tile
+            agentX = nextTile.x;
+            agentY = nextTile.y;
+            return {UNCOVER, nextTile.x, nextTile.y};
         }
-        cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+        else
+        {
+            TileLoc nextTile = tilesToUncover.back();            
+            tilesToUncover.pop_back();
 
-        playerBoard[nextTile.x][nextTile.y].uncovered = true;
+            cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+            contains(tilesToUncover, TileLoc(-1, -1));
 
-        ++numUncoveredTiles;
-        // Return the action to uncover the tile
-        agentX = nextTile.x;
-        agentY = nextTile.y;
-        return {UNCOVER, nextTile.x, nextTile.y};
+            while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
+            {
+                // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+                tilesToUncover.pop_back();
+                TileLoc nextTile = tilesToUncover.back();
+            }
+            cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+
+            playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+            ++numUncoveredTiles;
+            // Return the action to uncover the tile
+            agentX = nextTile.x;
+            agentY = nextTile.y;
+            return {UNCOVER, nextTile.x, nextTile.y};
+
+        }
+
+
     }
     else
     {
@@ -214,6 +270,8 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 }
 
                 TileLoc nextTile = tilesToUncover.back();
+                tilesToUncover.pop_back();
+
                 while (playerBoard[nextTile.x][nextTile.y].uncovered) 
                 {
                     // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
@@ -234,6 +292,8 @@ Agent::Action MyAI::ruleOfThumb(int number)
             else
             {
                 TileLoc nextTile = tilesToUncover.back();
+                    tilesToUncover.pop_back();
+
                 while (playerBoard[nextTile.x][nextTile.y].uncovered) 
                 {
                     // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
@@ -256,6 +316,8 @@ Agent::Action MyAI::ruleOfThumb(int number)
         {
             // std::cout << "nonempty" << std::endl;
             TileLoc nextTile = tilesToUncover.back();
+            tilesToUncover.pop_back();
+
             while (playerBoard[nextTile.x][nextTile.y].uncovered) 
             {
                 // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;

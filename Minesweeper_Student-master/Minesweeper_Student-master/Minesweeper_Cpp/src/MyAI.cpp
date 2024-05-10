@@ -60,7 +60,7 @@ Agent::Action MyAI::getAction( int number )
 
     else
     {
-        cout << "NUM OF uncovered TILES TOTAL: " << numUncoveredTiles << endl;
+        //cout << "NUM OF uncovered TILES TOTAL: " << numUncoveredTiles << endl;
         return ruleOfThumb(number); 
     }
         
@@ -77,7 +77,7 @@ Agent::Action MyAI::getAction( int number )
 
 Agent::Action MyAI::ruleOfThumb(int number)
 {
-    cout << agentX << " " << agentY << "sizeof todo" << tilesToUncover.size() << "number: " << number << endl;
+    //cout << agentX << " " << agentY << "sizeof todo" << tilesToUncover.size() << "number: " << number << endl;
     //procedure: init-uncover, then getAction(result) --> location-uncover || leave
         //location-uncover 
 
@@ -91,22 +91,22 @@ Agent::Action MyAI::ruleOfThumb(int number)
             {
                 int nx = agentX + dx;
                 int ny = agentY + dy;
-                cout << nx << " vs " << colDimension << ", " << ny << " vs " << rowDimension;
+                //cout << nx << " vs " << colDimension << ", " << ny << " vs " << rowDimension;
 		        
                 if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0)) 
                 {
-                    cout << "yes" << endl;
+                    //cout << "yes" << endl;
 
                     if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
                     {
-                        cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
+                        //cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
                         tilesToUncover.push_back( TileLoc(nx, ny));
 
                     }
                 }
                 else
                 {
-                    cout << "no" << endl;
+                    //cout << "no" << endl;
                 }
             }
         }
@@ -164,7 +164,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
             TileLoc nextTile = tilesToUncover.back();            
             tilesToUncover.pop_back();
 
-            cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+            //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
             contains(tilesToUncover, TileLoc(-1, -1));
 
             while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
@@ -174,7 +174,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 tilesToUncover.pop_back();
                 TileLoc nextTile = tilesToUncover.back();
             }
-            cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+            //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
 
             playerBoard[nextTile.x][nextTile.y].uncovered = true;
 
@@ -292,7 +292,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
             else
             {
                 TileLoc nextTile = tilesToUncover.back();
-                    tilesToUncover.pop_back();
+                tilesToUncover.pop_back();
 
                 while (playerBoard[nextTile.x][nextTile.y].uncovered) 
                 {
@@ -370,12 +370,12 @@ int MyAI::getNumUnmarkedNeighbors(int x, int y)
             int ny = y + dy;
             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
             {
-                cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
+                //cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
                 ++numUnmarkedNeighbors;
             }
         }
     }
-    cout << "Num unmarked neighbors around " << x+1 << " " << y+1 << ": " << numUnmarkedNeighbors << endl;
+    //cout << "Num unmarked neighbors around " << x+1 << " " << y+1 << ": " << numUnmarkedNeighbors << endl;
     return numUnmarkedNeighbors;
 }
 
@@ -391,7 +391,7 @@ void MyAI::markUnmarkedNeighbors(int x, int y)
             
             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
             {  
-                cout << "Marking " << nx+1 << " " << ny+1 << endl;
+                //cout << "Marking " << nx+1 << " " << ny+1 << endl;
                 playerBoard[nx][ny].flag = true;
                 // Update the number of flagged tiles
                 ++numFlaggedTiles;
@@ -410,7 +410,7 @@ bool MyAI::contains(vector<TileLoc> a, TileLoc b)
 
     for (int i = 0; i < a.size(); i++)
     {
-        cout << " {a[" << i << "].x: " << a[i].x << " a[" << i << "].y: " << a[i].y << "}" ;
+        //cout << " {a[" << i << "].x: " << a[i].x << " a[" << i << "].y: " << a[i].y << "}" ;
 
         if (a[i].x == b.x && a[i].y == b.y)
         {
@@ -418,7 +418,7 @@ bool MyAI::contains(vector<TileLoc> a, TileLoc b)
         }
         
     }
-    cout << endl;
+    //cout << endl;
     return false;
 
 

@@ -32,6 +32,10 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     agentX = _agentX;
     agentY = _agentY;
 
+    tilesToUncover = vector<TileLoc>();
+
+    numFlaggedTiles = 0;
+
 
     // created a blank copy of the board to update as game progresses
     playerBoard.resize(colDimension, vector<Tile>(rowDimension));
@@ -56,7 +60,7 @@ Agent::Action MyAI::getAction( int number )
 
     else
     {
-        cout << "NUM OF FLAGGED TILES TOTAL: " << numFlaggedTiles << endl;
+        cout << "NUM OF uncovered TILES TOTAL: " << numUncoveredTiles << endl;
         return ruleOfThumb(number); 
     }
         
@@ -73,51 +77,202 @@ Agent::Action MyAI::getAction( int number )
 
 Agent::Action MyAI::ruleOfThumb(int number)
 {
-    cout << agentX+1 << " " << agentY+1 << "number:" << number << endl;
-    // Calculate effective label of the current tile
-    int effectiveLabel = calculateEffectiveLabel(agentX, agentY, number);
+    cout << agentX << " " << agentY << "sizeof todo" << tilesToUncover.size() << "number: " << number << endl;
+    //procedure: init-uncover, then getAction(result) --> location-uncover || leave
+        //location-uncover 
 
-    // Apply rules based on the effective label
-    if (effectiveLabel == 0) {
-        // If effective label is 0, all unmarked neighbors are safe to uncover
-        for (int dx = -1; dx <= 1; ++dx) {
-            for (int dy = -1; dy <= 1; ++dy) {
+    // int effectiveLabel = calculateEffectiveLabel(agentX, agentY, number);
+
+    if (number == 0)
+    {
+        for (int dx = -1; dx <= 1; ++dx) 
+        {
+            for (int dy = -1; dy <= 1; ++dy) 
+            {
                 int nx = agentX + dx;
                 int ny = agentY + dy;
+                cout << nx << " vs " << colDimension << ", " << ny << " vs " << rowDimension;
 		        
-                if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) {
-                    cout << "UNCOVERING ALL NEIGHBORS AROUND " << agentX+1 << " " << agentY+1 << ": " << nx+1 << " " << ny+1 << endl;
-                    // Uncover the tile
-                    playerBoard[nx][ny].uncovered = true;
-                    playerBoard[lastX][lastY].number = number;
-                    // Update the count of uncovered tiles
-                    ++numUncoveredTiles;
-                    // Return the action to uncover the tile
-                    lastX = nx;
-                    lastY = ny;
-                    return {UNCOVER, nx, ny};
+                if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0)) 
+                {
+                    cout << "yes" << endl;
+
+                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
+                    {
+                        cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
+                        tilesToUncover.push_back( TileLoc(nx, ny));
+
+                    }
+                }
+                else
+                {
+                    cout << "no" << endl;
                 }
             }
         }
-    } 
-    else if (effectiveLabel == getNumUnmarkedNeighbors(agentX, agentY)) {
-        cout << "Marking all neighbors around " << agentX+1 << " " << agentY+1 <<  endl;
-        // If effective label equals the number of unmarked neighbors, mark all unmarked neighbors as mines
-        markUnmarkedNeighbors(agentX, agentY);
-        // Return LEAVE action as marking is done and no further action is required
-        
-    }
-    
-    // Update agent's position to the last uncovered tile
-    agentX = lastX;
-    agentY = lastY;
 
-    // Uncover the current tile if effective label is not 0 or the number of unmarked neighbors
-    cout << "Uncovering tile: " << agentX+1 << " " << agentY+1 << endl;
-    if (!playerBoard[agentX][agentY].uncovered)
-       ++numUncoveredTiles;
-    playerBoard[agentX][agentY].uncovered = true;
-    return {UNCOVER, agentX, agentY}; 
+        TileLoc nextTile = tilesToUncover.back();
+        cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+        contains(tilesToUncover, TileLoc(-1, -1));
+
+        while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
+        {
+            // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+            tilesToUncover.pop_back();
+            TileLoc nextTile = tilesToUncover.back();
+        }
+        cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+
+        playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+        ++numUncoveredTiles;
+        // Return the action to uncover the tile
+        agentX = nextTile.x;
+        agentY = nextTile.y;
+        return {UNCOVER, nextTile.x, nextTile.y};
+    }
+    else
+    {
+        //assume number is 1 (we r only testing easy after all iirc?)
+        //in this case we can ignore all its neighbors for now, keep taking from the queue, or, if the queue is empty 
+        //(the small chance that we receive a 1 at the beginning which i think is the only case that would prevent us 
+        //from getting to every tile by adjacency of 0's from agentx)
+        if (tilesToUncover.empty())
+        {
+            for (int x = -2; x < 3; ++x)
+            {
+                if (x == -2 || x == 2)
+                {
+                    for (int y = -2; y < 3; ++y)
+                    {
+                        int nx = agentX + x;
+                        int ny = agentY + y;
+
+                        if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension)
+                        {
+                            if (!playerBoard[nx][ny].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
+                            {
+                                tilesToUncover.push_back( TileLoc(nx, ny));
+                            }
+
+                        }
+                    }
+                }
+                else
+                {
+                    int nx = agentX + x;
+                    int ny = agentY - 2;
+                    int nyy = agentY + 2;
+                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension)
+                    {
+                        if (!playerBoard[nx][ny].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
+                        {
+                            tilesToUncover.push_back( TileLoc(nx, ny));
+                        }
+
+                    }
+                    if (nx >= 0 && nx < colDimension && nyy >= 0 && nyy < rowDimension)
+                    {
+                        if (!playerBoard[nx][nyy].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
+                        {
+                            tilesToUncover.push_back( TileLoc(nx, nyy));
+                        }
+                    }
+                }
+            }
+
+            //if still empty, uncover all except for closest tile to the center of board; (sorry its so messy lol)
+            if (tilesToUncover.empty())
+            {
+                vector<TileLoc> lastfewcovered = vector<TileLoc>();
+                for (int x = 0; x < colDimension; x++)
+                {
+                    for (int y = 0; y < rowDimension; y++)
+                    {
+                        if (!playerBoard[x][y].uncovered && !contains(tilesToUncover, TileLoc{x, y}))
+                        {
+                            lastfewcovered.push_back(TileLoc{x, y});
+                        }
+                    }
+                }
+                int min = INT_MAX;
+
+                for (int i = 0; i < lastfewcovered.size(); i++)
+                {
+                    if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) < min)
+                    {
+                        min = originDiff(lastfewcovered[i].x, lastfewcovered[i].y);
+                    }
+                }
+                for (int i = 0; i < lastfewcovered.size(); i++)
+                {
+                    if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) != min)
+                    {
+                        tilesToUncover.push_back(lastfewcovered[i]);
+                    }
+                }
+
+                TileLoc nextTile = tilesToUncover.back();
+                while (playerBoard[nextTile.x][nextTile.y].uncovered) 
+                {
+                    // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+                    tilesToUncover.pop_back();
+                    TileLoc nextTile = tilesToUncover.back();
+                }
+                playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+                ++numUncoveredTiles;
+                // Return the action to uncover the tile
+                agentX = nextTile.x;
+                agentY = nextTile.y;
+                return {UNCOVER, nextTile.x, nextTile.y};
+
+
+            }
+            else
+            {
+                TileLoc nextTile = tilesToUncover.back();
+                while (playerBoard[nextTile.x][nextTile.y].uncovered) 
+                {
+                    // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+                    tilesToUncover.pop_back();
+                    TileLoc nextTile = tilesToUncover.back();
+                }
+                playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+                ++numUncoveredTiles;
+                // Return the action to uncover the tile
+                agentX = nextTile.x;
+                agentY = nextTile.y;
+                return {UNCOVER, nextTile.x, nextTile.y};
+
+            }
+
+        }
+        else
+        {
+            // std::cout << "nonempty" << std::endl;
+            TileLoc nextTile = tilesToUncover.back();
+            while (playerBoard[nextTile.x][nextTile.y].uncovered) 
+            {
+                // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+                tilesToUncover.pop_back();
+                nextTile = tilesToUncover.back();
+            }
+            playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+            ++numUncoveredTiles;
+            // Return the action to uncover the tile
+            agentX = nextTile.x;
+            agentY = nextTile.y;
+            return {UNCOVER, nextTile.x, nextTile.y};
+
+        }
+    }
+
 }
 
 // Calculate the effective label of a tile by subtracting the number of marked neighbors from its label
@@ -182,6 +337,33 @@ void MyAI::markUnmarkedNeighbors(int x, int y)
         }
     }
 }
+
+int MyAI::originDiff(int x, int y)
+{
+    return (abs(rowDimension / 2 - y) + abs(colDimension / 2 - x));
+}
+
+bool MyAI::contains(vector<TileLoc> a, TileLoc b)
+{
+
+    for (int i = 0; i < a.size(); i++)
+    {
+        cout << " {a[" << i << "].x: " << a[i].x << " a[" << i << "].y: " << a[i].y << "}" ;
+
+        if (a[i].x == b.x && a[i].y == b.y)
+        {
+            return true;
+        }
+        
+    }
+    cout << endl;
+    return false;
+
+
+
+}
+
+
 
 // ======================================================================
 // YOUR CODE ENDS

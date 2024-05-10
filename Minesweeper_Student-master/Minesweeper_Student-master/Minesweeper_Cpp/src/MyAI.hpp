@@ -26,6 +26,8 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <math.h>
+#include <climits>
 
 using namespace std;
 
@@ -49,8 +51,27 @@ public:
         int  number     = 0;     // records number of bombs around
     };
 
+    struct TileLoc
+    {
+        int x;
+        int y;         // records number of bombs around
+
+        TileLoc(int ax, int ay)
+        {
+            x = ax;
+            y = ay;
+        }
+
+        bool comp(TileLoc a, TileLoc b)
+        {
+            return (a.x == b.x && a.y == b.y);
+        }
+    };
+
     vector<vector<Tile>> playerBoard;
-    vector<Tile> tilesToUncover;
+    vector<TileLoc> tilesToUncover;
+
+    //unordered_map<TileLoc, int> tilesToUncover;
 
     int numUncoveredTiles;
     int numFlaggedTiles;
@@ -61,6 +82,8 @@ public:
     int calculateEffectiveLabel(int x, int y, int number);
     int getNumUnmarkedNeighbors(int x, int y);
     void markUnmarkedNeighbors(int x, int y);
+    int originDiff(int x, int y);
+    bool contains(vector<TileLoc> a, TileLoc b);
 
     // ======================================================================
     // YOUR CODE ENDS

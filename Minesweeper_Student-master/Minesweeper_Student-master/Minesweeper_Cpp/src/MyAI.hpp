@@ -51,8 +51,9 @@ public:
         int  number     = 0;     // records number of bombs around
     };
 
-    struct TileLoc
+    class TileLoc
     {
+        public:
         int x;
         int y;         // records number of bombs around
 

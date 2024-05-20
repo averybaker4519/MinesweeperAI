@@ -48,7 +48,9 @@ public:
     {
         bool uncovered  = false; // the tile uncovered or not
         bool flag       = false; // the tile has been flag or not
-        int  number     = 0;     // records number of bombs around
+        //int  number     = 0;     // records number of bombs around
+	int effectiveLabel = -1;
+	int effectiveModifier = 0;
     };
 
     class TileLoc
@@ -79,10 +81,13 @@ public:
     int lastX, lastY;
 
     Agent::Action ruleOfThumb(int number);
+    Agent::Action BasicHeuristic(int number);
 
     int calculateEffectiveLabel(int x, int y, int number);
+    int getNumCoveredNeighbors(int x, int y);
+    int getNumMarkedNeighbors(int x, int y);
     int getNumUnmarkedNeighbors(int x, int y);
-    void markUnmarkedNeighbors(int x, int y);
+    vector<TileLoc> markUnmarkedNeighbors(int x, int y);
     int originDiff(int x, int y);
     bool contains(vector<TileLoc> a, TileLoc b);
 

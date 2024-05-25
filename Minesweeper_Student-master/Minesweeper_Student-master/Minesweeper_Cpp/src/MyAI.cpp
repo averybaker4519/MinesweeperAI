@@ -32,13 +32,35 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     agentX = _agentX;
     agentY = _agentY;
 
-    tilesToUncover = vector<TileLoc>();
+    tilesToUncover = vector<Tile>();
 
     numFlaggedTiles = 0;
 
 
     // created a blank copy of the board to update as game progresses
     playerBoard.resize(colDimension, vector<Tile>(rowDimension));
+
+    for (int x = 0; x < rowDimension; ++x)
+    {
+        for (int y = 0; y < colDimension; ++y)
+        {
+            playerBoard[x][y].x = x;
+            playerBoard[x][y].y = y;
+
+            if (x == 0 || x == rowDimension)
+            {
+                if (y == 0 || y == colDimension)
+                {
+                    playerBoard[x][y].numCoveredNeighbors = 3; 
+                }
+                else
+                {
+                    playerBoard[x][y].numCoveredNeighbors = 5;
+                }
+            }
+        }
+    }
+
     playerBoard[_agentX][_agentY].uncovered = true;
     numUncoveredTiles = 1;
 
@@ -98,10 +120,10 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 {
                     //cout << "yes" << endl;
 
-                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, TileLoc(nx, ny)))
+                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, playerBoard[nx][ny]))
                     {
                         //cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
-                        tilesToUncover.push_back( TileLoc(nx, ny));
+                        tilesToUncover.push_back( playerBoard[nx][ny]);
                         playerBoard[nx][ny].effectiveModifier--;
                     }
                 }
@@ -114,14 +136,14 @@ Agent::Action MyAI::ruleOfThumb(int number)
 
         if (tilesToUncover.empty())
         {
-            vector<TileLoc> lastfewcovered = vector<TileLoc>();
+            vector<Tile> lastfewcovered = vector<Tile>();
             for (int x = 0; x < colDimension; x++)
             {
                 for (int y = 0; y < rowDimension; y++)
                 {
-                    if (!playerBoard[x][y].uncovered && !contains(tilesToUncover, TileLoc{x, y}))
+                    if (!playerBoard[x][y].uncovered && !contains(tilesToUncover, playerBoard[x][y]))
                     {
-                        lastfewcovered.push_back(TileLoc{x, y});
+                        lastfewcovered.push_back(playerBoard[x][y]);
                     }
                 }
             }
@@ -142,7 +164,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 }
             }
 
-            TileLoc nextTile = tilesToUncover.back();
+            Tile nextTile = tilesToUncover.back();
             tilesToUncover.pop_back();
 
             while (playerBoard[nextTile.x][nextTile.y].uncovered) 
@@ -150,7 +172,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
 
                 tilesToUncover.pop_back();
-                TileLoc nextTile = tilesToUncover.back();
+                Tile nextTile = tilesToUncover.back();
             }
             playerBoard[nextTile.x][nextTile.y].uncovered = true;
 
@@ -162,18 +184,18 @@ Agent::Action MyAI::ruleOfThumb(int number)
         }
         else
         {
-            TileLoc nextTile = tilesToUncover.back();            
+            Tile nextTile = tilesToUncover.back();            
             tilesToUncover.pop_back();
 
             //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
-            contains(tilesToUncover, TileLoc(-1, -1));
+            contains(tilesToUncover, Tile(-1, -1));
 
             while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
             {
                 // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
 
                 tilesToUncover.pop_back();
-                TileLoc nextTile = tilesToUncover.back();
+                Tile nextTile = tilesToUncover.back();
             }
             //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
 
@@ -200,7 +222,7 @@ Agent::Action MyAI::BasicHeuristic(int number)
 {
     if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier == getNumCoveredNeighbors(agentX, agentY))
     {
-        vector<TileLoc> newlyMarkedNeighbors = markUnmarkedNeighbors(agentX, agentY);
+        vector<Tile> newlyMarkedNeighbors = markUnmarkedNeighbors(agentX, agentY);
 
         for (auto const& element: newlyMarkedNeighbors)
         {
@@ -217,7 +239,7 @@ Agent::Action MyAI::BasicHeuristic(int number)
 
                         if (playerBoard[nx][ny].effectiveLabel + playerBoard[nx][ny].effectiveModifier == 0)
                         {
-                            tilesToUncover.push_back(TileLoc(nx, ny));
+                            tilesToUncover.push_back(playerBoard[nx][ny]);
                         }
                     }
                 }
@@ -324,9 +346,9 @@ int MyAI::getNumUnmarkedNeighbors(int x, int y)
 }
 
 // Mark all unmarked neighbors of a tile as mines
-vector<MyAI::TileLoc> MyAI::markUnmarkedNeighbors(int x, int y) 
+vector<MyAI::Tile> MyAI::markUnmarkedNeighbors(int x, int y) 
 {
-    vector<MyAI::TileLoc> markedNeighbors;
+    vector<MyAI::Tile> markedNeighbors;
     for (int dx = -1; dx <= 1; ++dx) 
     {
         for (int dy = -1; dy <= 1; ++dy) 
@@ -341,7 +363,7 @@ vector<MyAI::TileLoc> MyAI::markUnmarkedNeighbors(int x, int y)
                 // Update the number of flagged tiles
                 ++numFlaggedTiles;
 
-                markedNeighbors.push_back(TileLoc(nx, ny));
+                markedNeighbors.push_back(Tile(nx, ny));
             }
         }
     }
@@ -354,7 +376,7 @@ int MyAI::originDiff(int x, int y)
     return (abs(rowDimension / 2 - y) + abs(colDimension / 2 - x));
 }
 
-bool MyAI::contains(vector<TileLoc> a, TileLoc b)
+bool MyAI::contains(vector<Tile> a, Tile b)
 {
 
     for (int i = 0; i < a.size(); i++)

@@ -44,35 +44,36 @@ public:
     // ======================================================================
 
     // taken from World.hpp
-    struct Tile
-    {
-        bool uncovered  = false; // the tile uncovered or not
-        bool flag       = false; // the tile has been flag or not
-        //int  number     = 0;     // records number of bombs around
-	int effectiveLabel = -1;
-	int effectiveModifier = 0;
-    };
-
-    class TileLoc
+    class Tile
     {
         public:
-        int x;
-        int y;         // records number of bombs around
+            int x;
+            int y;        
+            bool uncovered  = false; // the tile uncovered or not
+            bool flag       = false; // the tile has been flag or not
+            int effectiveLabel = -1;
+	        int effectiveModifier = 0;
+            int numCoveredNeighbors = 8;
 
-        TileLoc(int ax, int ay)
-        {
-            x = ax;
-            y = ay;
-        }
+            Tile()
+            {
 
-        bool comp(TileLoc a, TileLoc b)
-        {
-            return (a.x == b.x && a.y == b.y);
-        }
+            }
+
+            Tile(int ax, int ay)
+            {
+                x = ax;
+                y = ay;
+            }
+
+            bool comp(Tile a, Tile b)
+            {
+                return (a.x == b.x && a.y == b.y);
+            }
     };
 
     vector<vector<Tile>> playerBoard;
-    vector<TileLoc> tilesToUncover;
+    vector<Tile> tilesToUncover;
 
     //unordered_map<TileLoc, int> tilesToUncover;
 
@@ -87,9 +88,9 @@ public:
     int getNumCoveredNeighbors(int x, int y);
     int getNumMarkedNeighbors(int x, int y);
     int getNumUnmarkedNeighbors(int x, int y);
-    vector<TileLoc> markUnmarkedNeighbors(int x, int y);
+    vector<Tile> markUnmarkedNeighbors(int x, int y);
     int originDiff(int x, int y);
-    bool contains(vector<TileLoc> a, TileLoc b);
+    bool contains(vector<Tile> a, Tile b);
 
     // ======================================================================
     // YOUR CODE ENDS

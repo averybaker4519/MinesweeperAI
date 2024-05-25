@@ -47,9 +47,9 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
             playerBoard[x][y].x = x;
             playerBoard[x][y].y = y;
 
-            if (x == 0 || x == colDimension)
+            if (x == 0 || x == colDimension - 1)
             {
-                if (y == 0 || y == rowDimension)
+                if (y == 0 || y == rowDimension - 1)
                 {
                     playerBoard[x][y].numCoveredNeighbors = 3; 
                 }
@@ -58,6 +58,21 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
                     playerBoard[x][y].numCoveredNeighbors = 5;
                 }
             }
+
+            if (y == 0 || y == rowDimension - 1)
+            {
+                if (x == 0 || x == colDimension - 1)
+                {
+                    playerBoard[x][y].numCoveredNeighbors = 3;
+                }
+                else
+                {
+                    playerBoard[x][y].numCoveredNeighbors = 5;
+                }
+            }
+
+
+            cout << x << " " << y << ": " << playerBoard[x][y].numCoveredNeighbors << endl;
         }
     }
 
@@ -341,7 +356,8 @@ void MyAI::decrementCoveredNeighborValue(int x, int y)
             
             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
             {  
-                playerBoard[dx][dy].numCoveredNeighbors -= 1;
+                playerBoard[nx][ny].numCoveredNeighbors -= 1;
+                cout << nx << " " << ny << ": " << playerBoard[nx][ny].numCoveredNeighbors << endl;
             }
         }
     }

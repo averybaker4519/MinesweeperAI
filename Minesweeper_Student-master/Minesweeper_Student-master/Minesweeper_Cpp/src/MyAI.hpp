@@ -88,6 +88,7 @@ public:
     int getNumCoveredNeighbors(int x, int y);
     int getNumMarkedNeighbors(int x, int y);
     int getNumUnmarkedNeighbors(int x, int y);
+    void decrementCoveredNeighborValue(int x, int y);
     vector<Tile> markUnmarkedNeighbors(int x, int y);
     int originDiff(int x, int y);
     bool contains(vector<Tile> a, Tile b);

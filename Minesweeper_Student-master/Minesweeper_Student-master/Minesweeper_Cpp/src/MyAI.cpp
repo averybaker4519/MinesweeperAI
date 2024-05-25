@@ -40,16 +40,16 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     // created a blank copy of the board to update as game progresses
     playerBoard.resize(colDimension, vector<Tile>(rowDimension));
 
-    for (int x = 0; x < rowDimension; ++x)
+    for (int x = 0; x < colDimension; ++x)
     {
-        for (int y = 0; y < colDimension; ++y)
+        for (int y = 0; y < rowDimension; ++y)
         {
             playerBoard[x][y].x = x;
             playerBoard[x][y].y = y;
 
-            if (x == 0 || x == rowDimension)
+            if (x == 0 || x == colDimension)
             {
-                if (y == 0 || y == colDimension)
+                if (y == 0 || y == rowDimension)
                 {
                     playerBoard[x][y].numCoveredNeighbors = 3; 
                 }
@@ -60,6 +60,8 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
             }
         }
     }
+
+    decrementCoveredNeighborValue(agentX, agentY);
 
     playerBoard[_agentX][_agentY].uncovered = true;
     numUncoveredTiles = 1;
@@ -106,7 +108,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
 
     // int effectiveLabel = calculateEffectiveLabel(agentX, agentY, number);
 
-    if (playerBoard[agentX][agentY].effectiveLabel  + playerBoard[agentX][agentY].effectiveModifier == 0)
+    if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier <= 0)
     {
         for (int dx = -1; dx <= 1; ++dx) 
         {
@@ -133,54 +135,11 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 }
             }
         }
-
+        
+        // TODO: guessing logic
         if (tilesToUncover.empty())
         {
-            vector<Tile> lastfewcovered = vector<Tile>();
-            for (int x = 0; x < colDimension; x++)
-            {
-                for (int y = 0; y < rowDimension; y++)
-                {
-                    if (!playerBoard[x][y].uncovered && !contains(tilesToUncover, playerBoard[x][y]))
-                    {
-                        lastfewcovered.push_back(playerBoard[x][y]);
-                    }
-                }
-            }
-            int min = INT_MAX;
-
-            for (int i = 0; i < lastfewcovered.size(); i++)
-            {
-                if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) < min)
-                {
-                    min = originDiff(lastfewcovered[i].x, lastfewcovered[i].y);
-                }
-            }
-            for (int i = 0; i < lastfewcovered.size(); i++)
-            {
-                if (originDiff(lastfewcovered[i].x, lastfewcovered[i].y) != min)
-                {
-                    tilesToUncover.push_back(lastfewcovered[i]);
-                }
-            }
-
-            Tile nextTile = tilesToUncover.back();
-            tilesToUncover.pop_back();
-
-            while (playerBoard[nextTile.x][nextTile.y].uncovered) 
-            {
-                // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
-
-                tilesToUncover.pop_back();
-                Tile nextTile = tilesToUncover.back();
-            }
-            playerBoard[nextTile.x][nextTile.y].uncovered = true;
-
-            ++numUncoveredTiles;
-            // Return the action to uncover the tile
-            agentX = nextTile.x;
-            agentY = nextTile.y;
-            return {UNCOVER, nextTile.x, nextTile.y};
+            
         }
         else
         {
@@ -369,6 +328,23 @@ vector<MyAI::Tile> MyAI::markUnmarkedNeighbors(int x, int y)
     }
 
     return markedNeighbors;
+}
+
+void MyAI::decrementCoveredNeighborValue(int x, int y)
+{
+    for (int dx = -1; dx <= 1; ++dx) 
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
+            {  
+                playerBoard[dx][dy].numCoveredNeighbors -= 1;
+            }
+        }
+    }
 }
 
 int MyAI::originDiff(int x, int y)

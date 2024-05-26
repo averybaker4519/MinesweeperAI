@@ -101,7 +101,7 @@ public:
     bool contains(vector<Tile> a, Tile b);
     int tileOriginDiff(Tile);
     bool tileComp(Tile a, Tile b);
-    Tile getIthNeighbor(Tile a, int i);
+    Tile* getIthNeighbor(Tile a, int i);
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================

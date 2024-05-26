@@ -18,7 +18,7 @@
 // ======================================================================
 
 #include "MyAI.hpp"
-
+#include <list>
 MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX, int _agentY ) : Agent()
 {
     // ======================================================================
@@ -73,7 +73,7 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
             }
 
 
-            cout << x << " " << y << ": " << playerBoard[x][y].numCoveredNeighbors << endl;
+            // cout << x << " " << y << ": " << playerBoard[x][y].numCoveredNeighbors << endl;
         }
     }
 
@@ -92,6 +92,7 @@ Agent::Action MyAI::getAction( int number )
     // YOUR CODE BEGINS
     // ======================================================================    
 
+    
 
     if (colDimension * rowDimension - numUncoveredTiles <= totalMines)
     {
@@ -102,7 +103,20 @@ Agent::Action MyAI::getAction( int number )
     {
         //cout << "NUM OF uncovered TILES TOTAL: " << numUncoveredTiles << endl;
         playerBoard[agentX][agentY].effectiveLabel = number;
-        return ruleOfThumb(playerBoard[agentX][agentY].effectiveLabel); 
+
+        for (int i = 0; i < tilesToUncover.size(); i++)
+        {
+            cout << "(" << tilesToUncover[i].x+1 << ", " << tilesToUncover[i].y+1 << "): " << tilesToUncover[i].effectiveLabel << " vs " << tilesToUncover[i].effectiveModifier << endl;
+        }
+        if (number == 0)
+        {
+            return ruleOfThumb(number); 
+
+        }
+        else
+        {
+            return BasicHeuristic(number);
+        }
     }
         
     // ======================================================================
@@ -138,12 +152,15 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 {
                     //cout << "yes" << endl;
                     playerBoard[nx][ny].numCoveredNeighbors -= 1;
+                    dangerFrontier[playerBoard[nx][ny]] = 0;
 
-                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && tileOriginDiff(playerBoard[nx][ny]) == playerBoard[nx][ny].numCoveredNeighbors)
+
+                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, playerBoard[nx][ny])) //tileOriginDiff(playerBoard[nx][ny]) == playerBoard[nx][ny].numCoveredNeighbors+1
                     {
 
-                        //cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
+                        cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << ": " << nx+1 << ", " << ny+1 << "" << endl;
                         tilesToUncover.push_back( playerBoard[nx][ny]);
+
 
 
                         //removed subtracting effective label here
@@ -155,6 +172,10 @@ Agent::Action MyAI::ruleOfThumb(int number)
         // TODO: guessing logic
         if (tilesToUncover.empty())
         {
+            //TODO placeholder
+            cout << "leaving cuz tiles to uncover empty)" << endl;
+
+            return {LEAVE, -1, -1};
             
         }
         else
@@ -187,7 +208,9 @@ Agent::Action MyAI::ruleOfThumb(int number)
     }
     else
     {
-        return BasicHeuristic(number);
+        cout << "leaving cuz tiles to uncover empty) [[how]]" << endl;
+        return {LEAVE, -1, -1};
+
     }
 
 }
@@ -207,7 +230,7 @@ Agent::Action MyAI::BasicHeuristic(int number)
             {  
                 playerBoard[nx][ny].numCoveredNeighbors -= 1;
 
-                if (tileOriginDiff(playerBoard[nx][ny]) == playerBoard[nx][ny].numCoveredNeighbors+1)
+                if (dangerFrontier.find(playerBoard[nx][ny]) == dangerFrontier.end())
                 {
                     dangerFrontier[playerBoard[nx][ny]] = 0;
                 }
@@ -215,43 +238,107 @@ Agent::Action MyAI::BasicHeuristic(int number)
         }
     }
 
-    if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier == getNumCoveredNeighbors(agentX, agentY))
-    {
-        vector<Tile> newlyMarkedNeighbors = markUnmarkedNeighbors(agentX, agentY);
+    
 
-        for (auto const& element: newlyMarkedNeighbors)
-        {
-            // subtracting 1 from every neighbor's effectiveModifier
-            for (int dx = -1; dx <= 1; ++dx)
-            {
-                for (int dy = -1; dy <= 1; ++dy) 
-                {
-                    int nx = element.x + dx;
-                    int ny = element.y + dy;
-                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
-                    {
-                        playerBoard[nx][ny].effectiveModifier--;
-
-                        if (playerBoard[nx][ny].effectiveLabel + playerBoard[nx][ny].effectiveModifier == 0)
-                        {
-                            tilesToUncover.push_back(playerBoard[nx][ny]);
-                        }
-
-                        //TODO : remove from dangerFrontier, if it was previously in
-                    }
-                }
-            }
-        }
-
-        // frontier stuff
-    }
 
 
     //TODO: if tilesToUncover empty, else
 
-
-    else
+    if (!tilesToUncover.empty())
     {
+        Tile nextTile = tilesToUncover.back();            
+        tilesToUncover.pop_back();
+
+        //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+        // contains(tilesToUncover, Tile(-1, -1));
+
+        while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
+        {
+            // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+            tilesToUncover.pop_back();
+            Tile nextTile = tilesToUncover.back();
+        }
+        //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+
+        playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+        ++numUncoveredTiles;
+        // Return the action to uncover the tile
+        agentX = nextTile.x;
+        agentY = nextTile.y;
+        return {UNCOVER, nextTile.x, nextTile.y};
+
+    }
+
+
+
+    for (auto iter = dangerFrontier.begin(); iter != dangerFrontier.end(); ++iter)
+    {
+        cout << "DANGER-(" << iter->first.x+1 << ", " << iter->first.y+1 << "): " << iter->first.effectiveLabel << " vs " << iter->first.effectiveModifier << endl;
+
+        int lX = agentX;
+        int lY = agentY;
+        agentX = iter->first.x;
+        agentY = iter->first.y;
+        cout << playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier << " vs " << getNumCoveredNeighbors(agentX, agentY) << endl;
+        if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier == getNumCoveredNeighbors(agentX, agentY))
+        {
+
+            vector<Tile> newlyMarkedNeighbors = markUnmarkedNeighbors(agentX, agentY);
+
+            for (auto const& element: newlyMarkedNeighbors)
+            {
+                // subtracting 1 from every neighbor's effectiveModifier
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dy = -1; dy <= 1; ++dy) 
+                    {
+                        int nx = element.x + dx;
+                        int ny = element.y + dy;
+                        if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && playerBoard[nx][ny].uncovered) 
+                        {
+                            playerBoard[nx][ny].effectiveModifier--;
+                            cout << playerBoard[nx][ny].effectiveLabel << "+"  << playerBoard[nx][ny].effectiveModifier << ", then";
+
+                            if (playerBoard[nx][ny].effectiveLabel + playerBoard[nx][ny].effectiveModifier == 0)
+                            {
+                                for (int dxx = -1; dxx <= 1; ++dxx)
+                                {
+                                    for (int dyx = -1; dyx <= 1; ++dyx) 
+                                    {
+                                        int nxx = nx + dxx;
+                                        int nyx = ny + dyx;
+                                        if (nxx >= 0 && nxx < colDimension && nyx >= 0 && nyx < rowDimension && !(dxx == 0 && dyx == 0) && !playerBoard[nxx][nyx].uncovered && !playerBoard[nxx][nyx].flag) 
+                                        {
+                                            //cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
+                                            tilesToUncover.push_back(playerBoard[nxx][nyx]);
+
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            //TODO : remove from dangerFrontier, if it was previously in
+
+                        }
+                        cout <<endl;
+                    }
+                }
+            }
+
+            // frontier stuff
+        }
+        agentX = lX;
+        agentY = lY;
+    }
+
+    for (int i = 0; i < tilesToUncover.size(); i++)
+    {
+        cout << "(" << tilesToUncover[i].x+1 << ", " << tilesToUncover[i].y+1 << "): " << tilesToUncover[i].effectiveLabel << " vs " << tilesToUncover[i].effectiveModifier << endl;
+    }
+    
         //balancing heuristic: against # mines remaining / totalCovered - # flags (but how to distinguish frontier from wilds)
         //guess candidate = from .begin()
 
@@ -265,8 +352,34 @@ Agent::Action MyAI::BasicHeuristic(int number)
 
 
         // guess logic
-    }
+    
 
+    if (!tilesToUncover.empty())
+    {
+        Tile nextTile = tilesToUncover.back();            
+        tilesToUncover.pop_back();
+
+        //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+        // contains(tilesToUncover, Tile(-1, -1));
+
+        while (playerBoard[nextTile.x][nextTile.y].uncovered) //get next covered tile (ik, )
+        {
+            // std::cout << "failed at " << nextTile.x << ", " << nextTile.y << "- remaining" << tilesToUncover.size() << std::endl;
+
+            tilesToUncover.pop_back();
+            Tile nextTile = tilesToUncover.back();
+        }
+        //cout << "revealing" << nextTile.x << " vs " << colDimension << ", " << nextTile.y << " vs " << rowDimension << endl;
+
+        playerBoard[nextTile.x][nextTile.y].uncovered = true;
+
+        ++numUncoveredTiles;
+        // Return the action to uncover the tile
+        agentX = nextTile.x;
+        agentY = nextTile.y;
+        return {UNCOVER, nextTile.x, nextTile.y};
+
+    }
 
     return {LEAVE, -1, -1};
 }
@@ -305,7 +418,7 @@ int MyAI::getNumCoveredNeighbors(int x, int y)
         {
             int nx = x + dx;
             int ny = y + dy;
-            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && playerBoard[nx][ny].uncovered) 
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].uncovered) 
             {
                 //cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
                 ++numCoveredNeighbors;
@@ -316,6 +429,29 @@ int MyAI::getNumCoveredNeighbors(int x, int y)
     return numCoveredNeighbors;
 
 }
+
+// int MyAI::getNumCoveredNeighbors(int x, int y)
+// {
+//     list<MyAI::Tile> out = list<MyAI::Tile>();
+//     for (int dx = -1; dx <= 1; ++dx)
+//     {
+//         for (int dy = -1; dy <= 1; ++dy) 
+//         {
+//             int nx = x + dx;
+//             int ny = y + dy;
+//             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].uncovered) 
+//             {
+//                 //cout << "Unmarked: " << nx+1 << " " << ny+1 << endl;
+//                 out.insert(playerBoard[nx][ny]);
+
+//             }
+//         }
+//     }
+//     //cout << "Num unmarked neighbors around " << x+1 << " " << y+1 << ": " << numUnmarkedNeighbors << endl;
+//     return out;
+
+// }
+
 
 int MyAI::getNumMarkedNeighbors(int x, int y)
 {
@@ -460,7 +596,7 @@ bool MyAI::tileComp(Tile a, Tile b)
         return a.numCoveredNeighbors < b.numCoveredNeighbors;
     }
 }
-MyAI::Tile MyAI::getIthNeighbor(Tile a, int i)
+MyAI::Tile* MyAI::getIthNeighbor(Tile a, int i)
 {
     for (int dx = -1; dx <= 1; ++dx) 
     {
@@ -474,13 +610,14 @@ MyAI::Tile MyAI::getIthNeighbor(Tile a, int i)
             {  
                 if (i == 0)
                 {
-                    return playerBoard[nx][ny];
+                    return &playerBoard[nx][ny];
                 }
 
             }
             i -= 1;
         }
     }
+    return nullptr;
 
 }
 

@@ -33,6 +33,7 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
     agentY = _agentY;
 
     tilesToUncover = vector<Tile>();
+    dangerFrontier = map<Tile, int, MyAI::classComp>();
 
     numFlaggedTiles = 0;
 
@@ -76,7 +77,6 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
         }
     }
 
-    decrementCoveredNeighborValue(agentX, agentY);
 
     playerBoard[_agentX][_agentY].uncovered = true;
     numUncoveredTiles = 1;
@@ -91,6 +91,7 @@ Agent::Action MyAI::getAction( int number )
     // ======================================================================
     // YOUR CODE BEGINS
     // ======================================================================    
+
 
     if (colDimension * rowDimension - numUncoveredTiles <= totalMines)
     {
@@ -123,7 +124,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
 
     // int effectiveLabel = calculateEffectiveLabel(agentX, agentY, number);
 
-    if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier <= 0)
+    if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier == 0 || playerBoard[agentX][agentY].effectiveLabel == 0)
     {
         for (int dx = -1; dx <= 1; ++dx) 
         {
@@ -136,17 +137,17 @@ Agent::Action MyAI::ruleOfThumb(int number)
                 if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0)) 
                 {
                     //cout << "yes" << endl;
+                    playerBoard[nx][ny].numCoveredNeighbors -= 1;
 
-                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && !contains(tilesToUncover, playerBoard[nx][ny]))
+                    if (!playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered && tileOriginDiff(playerBoard[nx][ny]) == playerBoard[nx][ny].numCoveredNeighbors)
                     {
+
                         //cout << "UNCOVERING ALL NEIGHBORS AROUND(adding to queue) " << agentX << " " << agentY << ": " << nx << " " << ny << endl;
                         tilesToUncover.push_back( playerBoard[nx][ny]);
-                        playerBoard[nx][ny].effectiveModifier--;
+
+
+                        //removed subtracting effective label here
                     }
-                }
-                else
-                {
-                    //cout << "no" << endl;
                 }
             }
         }
@@ -180,7 +181,6 @@ Agent::Action MyAI::ruleOfThumb(int number)
             agentX = nextTile.x;
             agentY = nextTile.y;
             return {UNCOVER, nextTile.x, nextTile.y};
-
         }
 
 
@@ -194,6 +194,27 @@ Agent::Action MyAI::ruleOfThumb(int number)
 
 Agent::Action MyAI::BasicHeuristic(int number)
 {
+
+    // decrement neighbors..
+    for (int dx = -1; dx <= 1; ++dx) 
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx =agentX + dx;
+            int ny = agentY+ dy;
+            
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
+            {  
+                playerBoard[nx][ny].numCoveredNeighbors -= 1;
+
+                if (tileOriginDiff(playerBoard[nx][ny]) == playerBoard[nx][ny].numCoveredNeighbors+1)
+                {
+                    dangerFrontier[playerBoard[nx][ny]] = 0;
+                }
+            }
+        }
+    }
+
     if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier == getNumCoveredNeighbors(agentX, agentY))
     {
         vector<Tile> newlyMarkedNeighbors = markUnmarkedNeighbors(agentX, agentY);
@@ -215,6 +236,8 @@ Agent::Action MyAI::BasicHeuristic(int number)
                         {
                             tilesToUncover.push_back(playerBoard[nx][ny]);
                         }
+
+                        //TODO : remove from dangerFrontier, if it was previously in
                     }
                 }
             }
@@ -223,10 +246,27 @@ Agent::Action MyAI::BasicHeuristic(int number)
         // frontier stuff
     }
 
+
+    //TODO: if tilesToUncover empty, else
+
+
     else
     {
+        //balancing heuristic: against # mines remaining / totalCovered - # flags (but how to distinguish frontier from wilds)
+        //guess candidate = from .begin()
+
+        //run guesswork (up to..?)
+
+        // if minimum element is > % of random, and exhausted some small sample of searching in this space:
+
+            //just choose random
+
+
+
+
         // guess logic
     }
+
 
     return {LEAVE, -1, -1};
 }
@@ -363,11 +403,6 @@ void MyAI::decrementCoveredNeighborValue(int x, int y)
     }
 }
 
-int MyAI::originDiff(int x, int y)
-{
-    return (abs(rowDimension / 2 - y) + abs(colDimension / 2 - x));
-}
-
 bool MyAI::contains(vector<Tile> a, Tile b)
 {
 
@@ -383,13 +418,123 @@ bool MyAI::contains(vector<Tile> a, Tile b)
     }
     //cout << endl;
     return false;
+}
 
+int MyAI::tileOriginDiff(Tile exam)
+{
 
+    //return how many neighbors were covered at initiation of program
+    if (exam.x == 0 || exam.x == colDimension - 1)
+        {
+            if (exam.y == 0 || exam.y == rowDimension - 1)
+            {
+                return 3;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+        if (exam.y == 0 || exam.y == rowDimension - 1)
+        {
+            if (exam.x == 0 || exam.x == colDimension - 1)
+            {
+                return  3;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+    return 8;
+}
+
+bool MyAI::tileComp(Tile a, Tile b)
+{
+    if (a.numCoveredNeighbors == b.numCoveredNeighbors)
+    {
+        return a.effectiveLabel < b.effectiveLabel;
+    }
+    else
+    {
+        return a.numCoveredNeighbors < b.numCoveredNeighbors;
+    }
+}
+MyAI::Tile MyAI::getIthNeighbor(Tile a, int i)
+{
+    for (int dx = -1; dx <= 1; ++dx) 
+    {
+        for (int dy = -1; dy <= 1; ++dy) 
+        {
+            int nx = a.x + dx;
+            int ny = a.y + dy;
+
+            
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].flag && !playerBoard[nx][ny].uncovered) 
+            {  
+                if (i == 0)
+                {
+                    return playerBoard[nx][ny];
+                }
+
+            }
+            i -= 1;
+        }
+    }
 
 }
 
 
+// //TODOS: playerboard for guessFrom to play w/
+// //TODOS: way for guessfrom to know what last operation was
+// //TODOS: way to cut down upon things to be input: but dont want to repeat tiles -- add adj covered tiles to "to assign" somehow?
+// mapSol MyAI::guessFrom(Tile start, int depth=0, Tile lastConstraint, vector<vector<Tile>> copyBoard, map<Tile, bool> Assignment)
+// {
+//     //TODO check that current assignment is valid (satisfy known adjacent constraints? )
 
+
+//     //TODO check adjacent tiles for a num > 0 (there must be one, choose w smallest numcovered) = ConstraintTile
+        
+//         //TODO get permutations for assignments of ConstraintTile: minor recursive 
+
+
+
+//     //TODO at a certain depth, just have to return the map
+//         //else, whether to continue is whether current/last tile assigned was covered or not
+// }
+
+// list<map<Tile, bool>> getPermutations(Tile cur, int effectiveLabel, map<Tile, bool> Assignment)
+// {
+//     if (effectiveLabel == 0)
+//     {
+//         //set others remaining in cur neighborhood to Assignment = 0 [no mine]
+
+//         return Assignment;
+
+//     }
+//     else
+//     {
+//         list out = list()
+//         for (int i = 0; i < cur.numCoveredNeighbors; i++)
+//         {
+
+//             getPermutations(cur, effectiveLabel - 1, Assignment);             //TODO perform assignment inplace in function call?
+//             // TODO add to out
+
+//         }
+//         return out;
+
+//         //assign to one remaining
+//     }
+// }
+
+//Return the first neighbor from southeast most clockwise
+
+
+// struct mapSol {
+//     map Mapping;
+//     int sz
+// }
 // ======================================================================
 // YOUR CODE ENDS
 // ======================================================================

@@ -71,6 +71,13 @@ public:
                 return (a.x == b.x && a.y == b.y);
             }
     };
+    struct classComp {
+        bool operator() (const MyAI::Tile a, const MyAI::Tile b) const {    return a.numCoveredNeighbors > b.numCoveredNeighbors;};
+
+    };
+
+    map<Tile, int, classComp> dangerFrontier;
+
 
     vector<vector<Tile>> playerBoard;
     vector<Tile> tilesToUncover;
@@ -92,7 +99,9 @@ public:
     vector<Tile> markUnmarkedNeighbors(int x, int y);
     int originDiff(int x, int y);
     bool contains(vector<Tile> a, Tile b);
-
+    int tileOriginDiff(Tile);
+    bool tileComp(Tile a, Tile b);
+    Tile getIthNeighbor(Tile a, int i);
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================

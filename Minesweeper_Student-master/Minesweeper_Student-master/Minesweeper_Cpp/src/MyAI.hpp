@@ -76,7 +76,7 @@ public:
 
     };
 
-    map<Tile, int, classComp> dangerFrontier;
+    vector<Tile> dangerFrontier;
 
 
     vector<vector<Tile>> playerBoard;
@@ -102,6 +102,11 @@ public:
     int tileOriginDiff(Tile);
     bool tileComp(Tile a, Tile b);
     Tile* getIthNeighbor(Tile a, int i);
+    // int getNumCoveredNeighbors(int x, int y);
+    int finished();
+
+    Tile guess();
+    int enumerateMaxProb(int x, int y);
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================

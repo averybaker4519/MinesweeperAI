@@ -104,7 +104,7 @@ Agent::Action MyAI::getAction( int number )
 
     if (colDimension * rowDimension - numUncoveredTiles <= totalMines)
     {
-        cout <<"WEEEOOO:" << numUncoveredTiles << endl;
+        //cout <<"WEEEOOO:" << numUncoveredTiles << endl;
         return {LEAVE,-1,-1};
     }
 
@@ -131,7 +131,7 @@ Agent::Action MyAI::getAction( int number )
         }
         catch (exception E)
         {
-            cout << E.what() << endl;
+            //cout << E.what() << endl;
             return {LEAVE, -1, -1};
         }
         //// cerr << "NUM OF uncovered TILES TOTAL: " << numUncoveredTiles << endl;
@@ -213,7 +213,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
             }
             else
             {
-                cout << "what?" << endl;
+                //cout << "what?" << endl;
                 return {LEAVE, -1, -1};
             }
 
@@ -274,7 +274,7 @@ Agent::Action MyAI::ruleOfThumb(int number)
         }
         else
         {
-            cout << "what?" << endl;
+            //cout << "what?" << endl;
             return {LEAVE, -1, -1};
         }
 
@@ -372,7 +372,7 @@ Agent::Action MyAI::BasicHeuristic(int number)
             // cerr << "DANGER-(" << iter->x+1 << ", " << iter->y+1 << "): is uncovered? " << playerBoard[agentX][agentY].uncovered;
             if (agentX >= colDimension || agentY >= rowDimension )
             {
-                cout << "uhoh" << endl;
+                //cout << "uhoh" << endl;
                 break;
             }
             if (playerBoard[agentX][agentY].effectiveLabel + playerBoard[agentX][agentY].effectiveModifier + MyAI::getNumMarkedNeighbors(agentX, agentY) == getNumCoveredNeighbors(agentX, agentY))
@@ -566,7 +566,7 @@ Agent::Action MyAI::BasicHeuristic(int number)
     }
     else
     {
-        cout << "what?" << endl;
+        //cout << "what?" << endl;
         return {LEAVE, -1, -1};
     }
 
@@ -593,7 +593,7 @@ MyAI::Tile MyAI::guess()
     }
     if (k == -1)
     {
-        cout << " FAIL0";
+        //cout << " FAIL0";
 
         for (int i = 0; i < rowDimension; i++)
         {
@@ -613,7 +613,7 @@ MyAI::Tile MyAI::guess()
                     else
                     {
                         remnants.insert({enumerateMaxProb(j, i), playerBoard[j][i]});
-                        cout << remnants.size() << endl;
+                        //cout << remnants.size() << endl;
 
                     }
                                     
@@ -625,10 +625,10 @@ MyAI::Tile MyAI::guess()
     }
     if (k == -1)
     {
-        cout << " FAIL1";
+        //cout << " FAIL1";
         if (remnants.size() > 0)
         {
-            cout << remnants.begin()->first << "vs " << (remnants.begin()++)->first << endl;
+            //cout << remnants.begin()->first << "vs " << (remnants.begin()++)->first << endl;
             k = remnants.begin()->second.x;
             l = remnants.begin()->second.y;
 

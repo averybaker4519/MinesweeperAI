@@ -70,13 +70,21 @@ public:
             {
                 return (a.x == b.x && a.y == b.y);
             }
+
+            bool operator<(const Tile &other) const 
+            {
+                return (x < other.x) || (x == other.x && y < other.y);
+            }
     };
+
     struct classComp {
         bool operator() (const MyAI::Tile a, const MyAI::Tile b) const {    return a.numCoveredNeighbors > b.numCoveredNeighbors;};
 
     };
 
     vector<Tile> dangerFrontier;
+    set<Tile> coveredFrontier;
+    set<Tile> uncoveredFrontier;
 
 
     vector<vector<Tile>> playerBoard;
@@ -104,6 +112,10 @@ public:
     Tile* getIthNeighbor(Tile a, int i);
     // int getNumCoveredNeighbors(int x, int y);
     int finished();
+    void updateFrontiers();
+    bool hasUncoveredNeighbor(int x, int y);
+    bool hasCoveredNeighbor(int x, int y);
+
 
     Tile guess();
     int enumerateMaxProb(int x, int y);

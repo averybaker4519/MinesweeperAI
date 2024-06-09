@@ -87,6 +87,7 @@ MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX,
 
 
     playerBoard[_agentX][_agentY].uncovered = true;
+    uncoveredFrontier.insert(playerBoard[_agentX][_agentY]);
     numUncoveredTiles = 1;
 
     // ======================================================================
@@ -113,6 +114,9 @@ Agent::Action MyAI::getAction( int number )
         try
         {
             playerBoard[agentX][agentY].effectiveLabel = number;
+            // Update covered and uncovered frontiers
+            updateFrontiers();
+
             // cerr << tilesToUncover.size() << endl;
             // for (int i = 0; i < tilesToUncover.size(); i++)
             // {
@@ -466,21 +470,6 @@ Agent::Action MyAI::BasicHeuristic(int number)
     {
         // cerr << "(" << tilesToUncover[i].x+1 << ", " << tilesToUncover[i].y+1 << "): " << tilesToUncover[i].effectiveLabel << " vs " << tilesToUncover[i].effectiveModifier << endl;
     }
-    // cerr << tilesToUncover.size() << endl;
-    
-        //balancing heuristic: against # mines remaining / totalCovered - # flags (but how to distinguish frontier from wilds)
-        //guess candidate = from .begin()
-
-        //run guesswork (up to..?)
-
-        // if minimum element is > % of random, and exhausted some small sample of searching in this space:
-
-            //just choose random
-
-
-
-
-        // guess logic
     
 
     if (!tilesToUncover.empty())
@@ -521,36 +510,6 @@ Agent::Action MyAI::BasicHeuristic(int number)
         }
     }
 
-    //GUESSING HERE
-    //TODO vague hueristic on guessing vs on the frontier?
-    
-
-    // std::default_random_engine generator;
-    // std::uniform_int_distribution<int> distribution(0,max(rowDimension, colDimension));
-
-    // int rowNum = distribution(generator);
-    // int colNum = distribution(generator);
-
-    // while (true)
-    // {
-    //     if (rowNum < rowDimension && colNum < colDimension)
-    //     {
-    //         if (getNumCoveredNeighbors(rowNum, colNum) == tileOriginDiff(playerBoard[rowNum][colNum]))
-    //         {
-    //             break;
-    //         }
-    //         // cerr << getNumCoveredNeighbors(rowNum, colNum) << "vs " << tileOriginDiff(playerBoard[rowNum][colNum] )<< "at (" << rowNum << ", " << colNum << ")" << endl;
-    //         rowNum = distribution(generator);
-    //         colNum = distribution(generator);
-    //     }
-    //     else
-    //     {
-    //         // cerr << getNumCoveredNeighbors(rowNum, colNum) << "vs " << tileOriginDiff(playerBoard[rowNum][colNum] << "at (" << rowNum << ", " << colNum << ")" << endl;
-    //          rowNum = distribution(generator);
-    //         colNum = distribution(generator);
-
-    //     }
-    // }
     Tile next  = guess();
 
     if (!next.uncovered)
@@ -708,28 +667,6 @@ int MyAI::getNumCoveredNeighbors(int x, int y)
     return numCoveredNeighbors;
 
 }
-
-// int MyAI::getNumCoveredNeighbors(int x, int y)
-// {
-//     list<MyAI::Tile> out = list<MyAI::Tile>();
-//     for (int dx = -1; dx <= 1; ++dx)
-//     {
-//         for (int dy = -1; dy <= 1; ++dy) 
-//         {
-//             int nx = x + dx;
-//             int ny = y + dy;
-//             if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && !(dx == 0 && dy == 0) && !playerBoard[nx][ny].uncovered) 
-//             {
-//                 //// cerr << "Unmarked: " << nx+1 << " " << ny+1 << endl;
-//                 out.insert(playerBoard[nx][ny]);
-
-//             }
-//         }
-//     }
-//     //// cerr << "Num unmarked neighbors around " << x+1 << " " << y+1 << ": " << numUnmarkedNeighbors << endl;
-//     return out;
-
-// }
 
 
 int MyAI::getNumMarkedNeighbors(int x, int y)
@@ -900,57 +837,82 @@ MyAI::Tile* MyAI::getIthNeighbor(Tile a, int i)
 
 }
 
+void MyAI::updateFrontiers()
+{
+    // Clear previous frontiers
+    coveredFrontier.clear();
+    uncoveredFrontier.clear();
 
-// //TODOS: playerboard for guessFrom to play w/
-// //TODOS: way for guessfrom to know what last operation was
-// //TODOS: way to cut down upon things to be input: but dont want to repeat tiles -- add adj covered tiles to "to assign" somehow?
-// mapSol MyAI::guessFrom(Tile start, int depth=0, Tile lastConstraint, vector<vector<Tile>> copyBoard, map<Tile, bool> Assignment)
-// {
-//     //TODO check that current assignment is valid (satisfy known adjacent constraints? )
+    // Iterate over the board
+    for (int x = 0; x < colDimension; ++x)
+    {
+        for (int y = 0; y < rowDimension; ++y)
+        {
+            // If the tile is covered and has at least one uncovered neighbor, add it to the covered frontier
+            if (!playerBoard[x][y].uncovered && hasUncoveredNeighbor(x, y))
+            {
+                coveredFrontier.insert(playerBoard[x][y]);
+            }
+            // If the tile is uncovered and has at least one covered neighbor, add it to the uncovered frontier
+            else if (playerBoard[x][y].uncovered && hasCoveredNeighbor(x, y))
+            {
+                uncoveredFrontier.insert(playerBoard[x][y]);
+            }
 
+            // if a tile is uncovered, it's removed from the covered frontier
+            if (playerBoard[x][y].uncovered && coveredFrontier.find(playerBoard[x][y]) != coveredFrontier.end())
+            {
+                coveredFrontier.erase(playerBoard[x][y]);
+            }
+        }
+    }
 
-//     //TODO check adjacent tiles for a num > 0 (there must be one, choose w smallest numcovered) = ConstraintTile
-        
-//         //TODO get permutations for assignments of ConstraintTile: minor recursive 
+    //set<Tile>::iterator itr;
+    //for (itr = uncoveredFrontier.begin(); itr != uncoveredFrontier.end(); itr++) 
+    //{
+        //cout << "Uncovered frontier: " << itr->x + 1<< ", " << itr->y + 1<< endl;
+    //}
 
+    //for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
+    //{
+        //cout << "Covered frontier: " << itr->x +1 << ", " << itr->y + 1<< endl;
+    //}
+}
 
+bool MyAI::hasUncoveredNeighbor(int x, int y)
+{
+    // Iterate over neighbors
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension &&
+                playerBoard[nx][ny].uncovered && !playerBoard[x][y].uncovered)
+            {
+                return true; // Found an uncovered neighbor
+            }
+        }
+    }
+    return false; // No uncovered neighbors found
+}
 
-//     //TODO at a certain depth, just have to return the map
-//         //else, whether to continue is whether current/last tile assigned was covered or not
-// }
-
-// list<map<Tile, bool>> getPermutations(Tile cur, int effectiveLabel, map<Tile, bool> Assignment)
-// {
-//     if (effectiveLabel == 0)
-//     {
-//         //set others remaining in cur neighborhood to Assignment = 0 [no mine]
-
-//         return Assignment;
-
-//     }
-//     else
-//     {
-//         list out = list()
-//         for (int i = 0; i < cur.numCoveredNeighbors; i++)
-//         {
-
-//             getPermutations(cur, effectiveLabel - 1, Assignment);             //TODO perform assignment inplace in function call?
-//             // TODO add to out
-
-//         }
-//         return out;
-
-//         //assign to one remaining
-//     }
-// }
-
-// //Return the first neighbor from southeast most clockwise
-
-
-// struct mapSol {
-//     map Mapping;
-//     int sz
-// }
-// ======================================================================
-// YOUR CODE ENDS
-// ======================================================================
+bool MyAI::hasCoveredNeighbor(int x, int y)
+{
+    // Iterate over neighbors
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension &&
+                !playerBoard[nx][ny].uncovered)
+            {
+                return true; // Found a covered neighbor
+            }
+        }
+    }
+    return false; // No covered neighbors found
+}

@@ -24,6 +24,7 @@
 #include <iostream> // temporary use
 #include <vector>
 #include <map>
+#include <queue>
 #include <set>
 #include <algorithm>
 #include <math.h>
@@ -86,6 +87,7 @@ public:
     set<Tile> coveredFrontier;
     set<Tile> uncoveredFrontier;
 
+    queue<Tile> coveredFrontierQueue;
 
     vector<vector<Tile>> playerBoard;
     vector<Tile> tilesToUncover;
@@ -113,6 +115,7 @@ public:
     // int getNumCoveredNeighbors(int x, int y);
     int finished();
     void updateFrontiers();
+    void updateCoveredFrontierQueue();
     bool hasUncoveredNeighbor(int x, int y);
     bool hasCoveredNeighbor(int x, int y);
 

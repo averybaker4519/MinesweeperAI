@@ -539,11 +539,21 @@ Agent::Action MyAI::BasicHeuristic(int number)
 
 MyAI::Tile MyAI::guess()
 {
+    set<Tile>::iterator itr;
+    map<Tile, int> guessMap;
+    for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
+    {
+        guessMap[Tile(itr->x, itr->y)] = -1;
+    }
+
+    vector<vector<Tile>> copyOfPlayerBoard = playerBoard;
+
+    updateCoveredFrontierQueue();
+
     int k = -1;
     int l = -1;
     multimap<float, Tile> remnants = multimap<float, Tile>();
 
-    set<Tile>::iterator itr;
     for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
     {
         //cout << "IN FOR LOOP: " << itr->x << " " << itr->y << endl;
@@ -866,7 +876,7 @@ void MyAI::updateFrontiers()
         for (int y = 0; y < rowDimension; ++y)
         {
             // If the tile is covered and has at least one uncovered neighbor, add it to the covered frontier
-            if (!playerBoard[x][y].uncovered && hasUncoveredNeighbor(x, y))
+            if (!playerBoard[x][y].uncovered && !playerBoard[x][y].flag && hasUncoveredNeighbor(x, y))
             {
                 //cout << "Adding: " << x + 1<< ", " << y + 1<< " " << playerBoard[x][y].uncovered << endl;
                 coveredFrontier.insert(playerBoard[x][y]);
@@ -939,4 +949,41 @@ bool MyAI::hasCoveredNeighbor(int x, int y)
         }
     }
     return false; // No covered neighbors found
+}
+
+void MyAI::updateCoveredFrontierQueue()
+{
+    int tilesCovered = 0;
+    int tilesToCover = rowDimension * colDimension;
+    int distance = 1;
+
+    for (distance = 0; ; distance++)
+    {
+        if (tilesCovered > tilesToCover)
+            break;
+
+        distance++;
+
+        for (int dx = -distance; dx <= distance; ++dx)
+        {
+            if (tilesCovered > tilesToCover)
+                break;
+
+            for (int dy = -distance; dy <= distance; ++dy)
+            {
+                int nx = agentX + dx;
+                int ny = agentY + dy;
+                tilesCovered++;
+
+                if (tilesCovered > tilesToCover)
+                    break;
+
+                if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && coveredFrontier.find(playerBoard[nx][ny]) != coveredFrontier.end())
+                {
+                    coveredFrontierQueue.push(playerBoard[nx][ny]);
+                    cout << nx + 1 << " " << ny + 1 << endl;
+                }
+            }
+        }
+    }
 }

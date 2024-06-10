@@ -118,6 +118,9 @@ public:
     void updateCoveredFrontierQueue();
     bool hasUncoveredNeighbor(int x, int y);
     bool hasCoveredNeighbor(int x, int y);
+    
+    map<Tile, int> backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue);
+    map<Tile, int> backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue);
 
 
     Tile guess();

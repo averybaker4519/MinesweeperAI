@@ -548,7 +548,8 @@ MyAI::Tile MyAI::guess()
 
     vector<vector<Tile>> copyOfPlayerBoard = playerBoard;
 
-    updateCoveredFrontierQueue();
+    updateCoveredFrontierQueue();    
+
 
     int k = -1;
     int l = -1;
@@ -981,9 +982,22 @@ void MyAI::updateCoveredFrontierQueue()
                 if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && coveredFrontier.find(playerBoard[nx][ny]) != coveredFrontier.end())
                 {
                     coveredFrontierQueue.push(playerBoard[nx][ny]);
-                    cout << nx + 1 << " " << ny + 1 << endl;
+                    //cout << nx + 1 << " " << ny + 1 << endl;
                 }
             }
         }
     }
+}
+
+map<MyAI::Tile, int> MyAI::backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue)
+{
+    if (coveredFrontierQueue.empty())
+        return guessMap;
+    
+    
+}
+
+map<MyAI::Tile, int> MyAI::backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue)
+{
+    return backtrack(guessMap, copyOfBoard, coveredFrontierQueue);
 }

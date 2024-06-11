@@ -130,7 +130,7 @@ public:
     bool areConstraintsSatisfied(int x, int y, vector<vector<Tile>>& board, Tile next);
 
     void updateFrontiers();
-    void updateCoveredFrontierQueue();
+    void updateCoveredFrontierQueue(int x, int y);
     bool hasUncoveredNeighbor(int x, int y);
     bool hasCoveredNeighbor(int x, int y);
     
@@ -139,7 +139,7 @@ public:
 
 
     Tile guess();
-    int enumerateMaxProb(int x, int y);
+    float enumerateMaxProb(int x, int y);
     // ======================================================================
     // YOUR CODE ENDS
     // ======================================================================

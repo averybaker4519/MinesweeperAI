@@ -32,8 +32,6 @@ World::World(bool _debug, string aiType, string filename)
         ifstream file;
         file.open(filename);
 
-        file >> rowDimension >> colDimension;
-
         if (file.fail())
             throw exception();
         board = new Tile*[colDimension];

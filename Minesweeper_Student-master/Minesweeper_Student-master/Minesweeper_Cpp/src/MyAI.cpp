@@ -534,25 +534,65 @@ MyAI::Tile MyAI::guess()
 {
     set<Tile>::iterator itr;
     map<Tile, int> guessMap;
+    float min = 1;
+    int minx = -1;
+    int miny = -1;
+    updateCoveredFrontierQueue(minx, miny);
+
     for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
     {
+        if (enumerateMaxProb(itr->x, itr->y) < min)
+        {
+            minx = itr->x;
+            miny = itr->y;
+            min = enumerateMaxProb(itr->x, itr->y);
+        }
         guessMap[Tile(itr->x, itr->y)] = -1;
     }
 
+    //cout << "KAJSHDKJHAS" << endl;
     vector<vector<Tile>> copyOfPlayerBoard = playerBoard;
 
-    updateCoveredFrontierQueue();
+
+    updateCoveredFrontierQueue(minx, miny);
+    //cout << "KAJSHDKJHAS" << endl;
 
     map<Tile, list<bool>> domainValues;
     for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
     {
         domainValues[Tile(itr->x, itr->y)] = list<bool>{true, false};
     }
-
+    //cout << "KAJSHDKJHAS" << endl;
     map<Tile, int> result = backtrackingSearch(guessMap, copyOfPlayerBoard, this->coveredFrontierQueue, domainValues);
-
+    //cout << "KAJSHDKJHAS" << endl;
     if (!result.empty())
     {
+        //cout << "KAJSHDKJHAS" << endl;
+        //for (auto i = result.begin(); i != result.end(); i++)
+        //{
+            //cout << i->first.x << " " << i->first.y << "   " << i->second << endl;
+        //}
+
+        //cout << minx << " " << miny << endl;
+
+        if (minx >= 0 && miny >= 0 && result[Tile(minx, miny)] == 1)
+        {
+            //dont pick it
+            for (auto i = result.begin(); i != result.end(); i++)
+            {
+                if (i->second == 0)
+                {
+                    return playerBoard[i->first.x][i->first.y];
+                }
+            }
+            //do .. idk
+
+        }
+        else
+        {
+            return playerBoard[minx][miny];
+        }
+        
         
 
     }
@@ -560,11 +600,9 @@ MyAI::Tile MyAI::guess()
     {
         
     }
-
-
     
 
-
+    // if above doesn't work out 
     int k = -1;
     int l = -1;
     multimap<float, Tile> remnants = multimap<float, Tile>();
@@ -644,7 +682,7 @@ MyAI::Tile MyAI::guess()
 }
 
 
-int MyAI::enumerateMaxProb(int x, int y)
+float MyAI::enumerateMaxProb(int x, int y)
 {
     float max = 0;
     for (int dx = -1; dx <= 1; ++dx) 
@@ -966,40 +1004,39 @@ bool MyAI::hasCoveredNeighbor(int x, int y)
     return false; // No covered neighbors found
 }
 
-void MyAI::updateCoveredFrontierQueue()
+void MyAI::updateCoveredFrontierQueue(int ax, int ay)
 {
+    while (!coveredFrontierQueue.empty())
+    {
+        coveredFrontierQueue.pop();
+    }
+
     int tilesCovered = 0;
     int tilesToCover = rowDimension * colDimension;
     int distance = 1;
 
-    for (distance = 0; ; distance++)
+    for (int dx = -distance; dx <= distance; ++dx)
     {
         if (tilesCovered > tilesToCover)
             break;
 
-        distance++;
-
-        for (int dx = -distance; dx <= distance; ++dx)
+        for (int dy = -distance; dy <= distance; ++dy)
         {
+            int nx = ax + dx;
+            int ny = ay + dy;
+            tilesCovered++;
+
             if (tilesCovered > tilesToCover)
                 break;
 
-            for (int dy = -distance; dy <= distance; ++dy)
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && coveredFrontier.find(playerBoard[nx][ny]) != coveredFrontier.end())
             {
-                int nx = agentX + dx;
-                int ny = agentY + dy;
-                tilesCovered++;
-
-                if (tilesCovered > tilesToCover)
-                    break;
-
-                if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && coveredFrontier.find(playerBoard[nx][ny]) != coveredFrontier.end())
-                {
-                    coveredFrontierQueue.push(playerBoard[nx][ny]);
-                    //cout << nx + 1 << " " << ny + 1 << endl;
-                }
+                coveredFrontierQueue.push(playerBoard[nx][ny]);
+                //cout << nx + 1 << " " << ny + 1 << endl;
             }
         }
+
+        distance++;
     }
 }
 

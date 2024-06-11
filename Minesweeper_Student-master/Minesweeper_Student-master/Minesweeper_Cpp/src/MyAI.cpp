@@ -17,14 +17,7 @@
 //                be lost when the tournament runs your code.
 // ======================================================================
 
-
-
-
 #include "MyAI.hpp"
-#include <list>
-#include <random>
-
-
 
 MyAI::MyAI ( int _rowDimension, int _colDimension, int _totalMines, int _agentX, int _agentY ) : Agent()
 {
@@ -548,7 +541,28 @@ MyAI::Tile MyAI::guess()
 
     vector<vector<Tile>> copyOfPlayerBoard = playerBoard;
 
-    updateCoveredFrontierQueue();    
+    updateCoveredFrontierQueue();
+
+    map<Tile, list<bool>> domainValues;
+    for (itr = coveredFrontier.begin(); itr != coveredFrontier.end(); itr++) 
+    {
+        domainValues[Tile(itr->x, itr->y)] = list<bool>{true, false};
+    }
+
+    map<Tile, int> result = backtrackingSearch(guessMap, copyOfPlayerBoard, this->coveredFrontierQueue, domainValues);
+
+    if (!result.empty())
+    {
+        
+
+    }
+    else
+    {
+        
+    }
+
+
+    
 
 
     int k = -1;
@@ -989,15 +1003,182 @@ void MyAI::updateCoveredFrontierQueue()
     }
 }
 
-map<MyAI::Tile, int> MyAI::backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue)
+
+void MyAI::tentativeAssign(Tile target, int forwards, vector<vector<Tile>> &copyBoard, bool mine)
+{
+
+    if (mine)
+    {
+        if (forwards)
+        {
+            copyBoard[target.x][target.y].flag = mine;
+            for (int dx = -1; dx <= 1; ++dx)
+            {
+                for (int dy = -1; dy <= 1; ++dy)
+                {
+                    int  nx = target.x + dx;
+                    int ny = target.y + dy;
+                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && copyBoard[nx][ny].uncovered)
+                    {
+                        copyBoard[target.x][target.y].effectiveModifier -= 1 ;
+                    }
+                }
+            }
+        }
+        else
+        {
+            copyBoard[target.x][target.y].flag = false;
+            for (int dx = -1; dx <= 1; ++dx)
+            {
+                for (int dy = -1; dy <= 1; ++dy)
+                {
+                    int nx = target.x + dx;
+                    int ny = target.y + dy;
+                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && copyBoard[nx][ny].uncovered)
+                    {
+                        copyBoard[target.x][target.y].effectiveModifier += 1;
+                    }
+                }
+            }
+
+        }
+    }
+    else
+    {
+        if (forwards)
+        {
+            copyBoard[target.x][target.y].uncovered = (bool) mine;
+            for (int dx = -1; dx <= 1; ++dx)
+            {
+                for (int dy = -1; dy <= 1; ++dy)
+                {
+                    int nx = target.x + dx;
+                    int ny = target.y + dy;
+                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && copyBoard[nx][ny].uncovered)
+                    {
+                        copyBoard[target.x][target.y].numCoveredNeighbors += 1   ;
+                    }
+                }
+            }
+
+
+        }
+        else
+        {
+            copyBoard[target.x][target.y].uncovered = false;
+            for (int dx = -1; dx <= 1; ++dx)
+            {
+                for (int dy = -1; dy <= 1; ++dy)
+                {
+                    int nx = target.x + dx;
+                    int ny = target.y + dy;
+                    if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension && copyBoard[nx][ny].uncovered)
+                    {
+                        copyBoard[target.x][target.y].numCoveredNeighbors -= 1   ;
+                    }
+                }
+            }
+
+
+        }
+
+    }
+}
+    
+    
+
+
+
+
+map<MyAI::Tile, int> MyAI::backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue, map<Tile, list<bool>> domainValues)
 {
     if (coveredFrontierQueue.empty())
         return guessMap;
+    else
+    {
+
+        Tile next = coveredFrontierQueue.back(); // right one?
+        coveredFrontierQueue.pop();
+
+        for (int i = 0; i < 2; i++)
+        {
+            vector<vector<Tile>>& copyBoard = copyOfBoard;
+            tentativeAssign(next, 1, copyBoard, (bool) i);
+
+            // if i == 0 : {{make sure to assign somehow on board; use 'uncovered' == true? but might need to fix up more logic in this case bc we will not get a number for effective label}}
+            // list assignment = {next, i} ; might need to decompose next into next.x next.y for list type; this is needed to remove from assignments later
+            guessMap[next] = i;
+
+
+            // check all tiles adjacent to next to see if flagging it makes any of those uncovered frontier constraints unsatisfiable (for ex, flagging a tile when there is an effective
+            // label of 0 in the neighborhood or 'uncovering' the last tile when there is an effective label of 1 in the neighborhood)
+            bool b = areConstraintsSatisfied(next.x, next.y, copyBoard, next);
+
+            //if this fails, guessmap[next] = -1
+            if (!b)
+            {
+                guessMap[next] = -1;
+                tentativeAssign(next, 0, copyBoard, (bool) i);
+
+            } 
+            else
+            {
+                map<Tile, int> result = backtrack(guessMap, copyOfBoard, coveredFrontierQueue, domainValues);
+
+                if (result.empty())
+                {
+                    guessMap[next] = -1;
+
+                }
+                else
+                {
+                    return result;
+                }
+            }
+
+            //INFERENCE function can be implemented later.
+
+        }
+    }
     
-    
+    return map<Tile, int>(); // empty map connotes failure bc we are not pointering
+}
+   
+map<MyAI::Tile, int> MyAI::backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue, map<Tile, list<bool>> domainValues)
+{
+    return backtrack(guessMap, copyOfBoard, coveredFrontierQueue, domainValues);
 }
 
-map<MyAI::Tile, int> MyAI::backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue)
+bool MyAI::areConstraintsSatisfied(int x, int y, vector<vector<Tile>>& board, Tile next)
 {
-    return backtrack(guessMap, copyOfBoard, coveredFrontierQueue);
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < colDimension && ny >= 0 && ny < rowDimension)
+            {
+                Tile& neighbor = board[nx][ny];
+                
+                if (neighbor.uncovered)
+                {
+                    if (neighbor.effectiveLabel == 0 && next.flag)
+                    {
+                        return false;
+                    }
+                    if (neighbor.effectiveLabel == 1 && !next.flag)
+                    {
+                        if (getNumCoveredNeighbors(nx, ny) == 1)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                
+            }
+        }
+    }
+
+    return true;
 }

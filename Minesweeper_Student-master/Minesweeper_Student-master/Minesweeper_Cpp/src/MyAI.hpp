@@ -25,9 +25,11 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <list>
 #include <set>
 #include <algorithm>
 #include <math.h>
+#include <random>
 #include <climits>
 
 using namespace std;
@@ -72,9 +74,19 @@ public:
                 return (a.x == b.x && a.y == b.y);
             }
 
-            bool operator<(const Tile &other) const 
+            bool operator == (const Tile &other) const 
+            {
+                return (x == other.x) && (y == other.y);
+            }
+
+            bool operator <(const Tile &other) const 
             {
                 return (x < other.x) || (x == other.x && y < other.y);
+            }
+
+            bool operator >(const Tile &other) const 
+            {
+                return (x > other.x) || (x == other.x && y > other.y);
             }
     };
 
@@ -114,13 +126,16 @@ public:
     Tile* getIthNeighbor(Tile a, int i);
     // int getNumCoveredNeighbors(int x, int y);
     int finished();
+    void tentativeAssign(Tile target, int forwards, vector<vector<Tile>> &copyBoard, bool mine);
+    bool areConstraintsSatisfied(int x, int y, vector<vector<Tile>>& board, Tile next);
+
     void updateFrontiers();
     void updateCoveredFrontierQueue();
     bool hasUncoveredNeighbor(int x, int y);
     bool hasCoveredNeighbor(int x, int y);
     
-    map<Tile, int> backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue);
-    map<Tile, int> backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue);
+    map<Tile, int> backtrack(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue, map<Tile, list<bool>> domainValues);
+    map<Tile, int> backtrackingSearch(map<Tile, int> guessMap, vector<vector<Tile>> copyOfBoard, queue<Tile> coveredFrontierQueue, map<Tile, list<bool>> domainValues);
 
 
     Tile guess();
